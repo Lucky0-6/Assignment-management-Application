@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Byte</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#f8f7ff;--surface:#fff;--surface2:#f0effe;--text:#1a1730;--text2:#6b6890;--text3:#a8a4c8;
+--accent:#6c5ce7;--accent2:#a29bfe;--accent-bg:#f0effe;
+--green:#00b894;--green-bg:#e6faf6;--amber:#e67e22;--amber-bg:#fef3e6;--red:#e74c3c;--red-bg:#fdecea;
+--border:#e8e4ff;--card-shadow:0 1px 4px rgba(108,92,231,0.07);
+--sidebar:220px;--radius:12px;--radius-sm:8px;
+}
+.dark{
+--bg:#12101f;--surface:#1e1b35;--surface2:#2a2648;--text:#f0eeff;--text2:#a09ccc;--text3:#6b678f;
+--accent:#a29bfe;--accent2:#6c5ce7;--accent-bg:#2a2648;
+--green:#00cba4;--green-bg:#0d2e28;--amber:#f39c12;--amber-bg:#2e2010;--red:#e74c3c;--red-bg:#2e1210;
+--border:#2e2a4a;--card-shadow:0 1px 6px rgba(0,0,0,0.3);
+}
+body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;font-size:14px;line-height:1.5;min-height:600px;transition:background .3s,color .3s}
+.app{display:flex;height:600px;overflow:hidden;border-radius:var(--radius);border:1px solid var(--border)}
+.sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width .25s,background .3s}
+.sidebar.collapsed{width:56px}
+.logo-row{display:flex;align-items:center;gap:10px;padding:18px 16px 12px;border-bottom:1px solid var(--border)}
+.logo-icon{width:30px;height:30px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon svg{width:16px;height:16px;fill:#fff}
+.logo-text{font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden}
+.avatar-section{padding:14px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;flex-shrink:0}
+.avatar-info{overflow:hidden}
+.avatar-name{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap}
+.avatar-role{font-size:11px;color:var(--text3)}
+nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-radius:var(--radius-sm);margin:1px 6px;transition:background .15s,color .15s;color:var(--text2);font-size:13px;white-space:nowrap;overflow:hidden}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.7}
+.nav-item:hover{background:var(--accent-bg);color:var(--accent)}
+.nav-item:hover svg{opacity:1}
+.nav-item.active{background:var(--accent-bg);color:var(--accent);font-weight:500}
+.nav-item.active svg{opacity:1}
+.nav-label{font-size:11px;color:var(--text3);padding:10px 16px 4px;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.sidebar-footer{padding:10px 12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.dark-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 8px;border-radius:var(--radius-sm);background:var(--surface2);border:none;color:var(--text2);font-size:12px;transition:background .2s}
+.dark-toggle:hover{background:var(--accent-bg);color:var(--accent)}
+.toggle-pill{width:28px;height:16px;border-radius:8px;background:var(--border);position:relative;transition:background .2s}
+.toggle-pill.on{background:var(--accent)}
+.toggle-dot{width:12px;height:12px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s}
+.toggle-pill.on .toggle-dot{transform:translateX(12px)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg)}
+.topbar{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
+.page-title{font-size:15px;font-weight:600;color:var(--text);flex:1}
+.search-box{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--text3);cursor:text}
+.notif-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;flex-shrink:0}
+.notif-dot{width:7px;height:7px;border-radius:50%;background:var(--red);position:absolute;top:5px;right:5px;border:1.5px solid var(--surface)}
+.content{flex:1;overflow-y:auto;padding:16px 20px}
+.page{display:none}
+.page.active{display:block}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--card-shadow)}
+.card-title{font-size:12px;font-weight:500;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+.stat-val{font-size:22px;font-weight:600;color:var(--text)}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.stat-up{color:var(--green);font-size:11px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:3px 8px;border-radius:20px}
+.badge-purple{background:var(--accent-bg);color:var(--accent)}
+.badge-green{background:var(--green-bg);color:var(--green)}
+.badge-amber{background:var(--amber-bg);color:var(--amber)}
+.badge-red{background:var(--red-bg);color:var(--red)}
+.progress-bar{height:6px;border-radius:3px;background:var(--surface2);overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .6s ease}
+.progress-fill.green{background:var(--green)}
+.progress-fill.amber{background:var(--amber)}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin:16px 0 10px}
+.section-head h3{font-size:14px;font-weight:600;color:var(--text)}
+.view-all{font-size:12px;color:var(--accent);cursor:pointer;background:none;border:none;padding:0}
+.course-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--card-shadow);cursor:pointer;transition:transform .15s,box-shadow .15s}
+.course-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(108,92,231,0.12)}
+.course-img{height:80px;border-radius:var(--radius-sm);margin-bottom:10px;display:flex;align-items:center;justify-content:center;font-size:28px}
+.course-name{font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px}
+.course-meta{font-size:11px;color:var(--text3);margin-bottom:8px}
+.task-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);margin-bottom:6px;cursor:pointer;transition:border-color .15s,transform .15s}
+.task-item:hover{border-color:var(--accent);transform:translateX(2px)}
+.task-check{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.task-check.done{background:var(--green);border-color:var(--green)}
+.task-check.done::after{content:'';width:6px;height:4px;border-left:1.5px solid #fff;border-bottom:1.5px solid #fff;transform:rotate(-45deg);margin-top:-1px}
+.task-info{flex:1;min-width:0}
+.task-name{font-size:13px;font-weight:500;color:var(--text)}
+.task-course{font-size:11px;color:var(--text3)}
+.task-due{font-size:11px;color:var(--amber);font-weight:500;flex-shrink:0}
+.task-due.late{color:var(--red)}
+.task-due.ok{color:var(--green)}
+.lb-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-sm);margin-bottom:4px;background:var(--surface);border:1px solid var(--border)}
+.lb-rank{width:24px;font-size:13px;font-weight:600;color:var(--text3);text-align:center;flex-shrink:0}
+.lb-rank.top{color:var(--accent)}
+.lb-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0}
+.lb-name{flex:1;font-size:13px;font-weight:500;color:var(--text)}
+.lb-pts{font-size:12px;font-weight:600;color:var(--accent)}
+.lb-badge-row{display:flex;gap:4px;flex-shrink:0}
+.lb-badge{font-size:14px}
+.editor-wrap{background:#1e1b35;border-radius:var(--radius);overflow:hidden;border:1px solid #3a3560}
+.editor-bar{background:#2a2648;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #3a3560}
+.editor-filename{font-size:12px;color:#a29bfe;font-family:monospace}
+.editor-btns{display:flex;gap:6px}
+.ebtn{padding:5px 12px;border-radius:6px;border:none;font-size:12px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.ebtn:hover{opacity:.85}
+.ebtn-run{background:#00b894;color:#fff}
+.ebtn-sub{background:#6c5ce7;color:#fff}
+.code-area{padding:14px;font-family:monospace;font-size:12px;line-height:1.7;color:#f8f8f2;min-height:160px;background:#1e1b35;white-space:pre;overflow-x:auto}
+.kw{color:#ff79c6}.fn{color:#50fa7b}.cm{color:#6272a4}.str{color:#f1fa8c}.num{color:#bd93f9}.type{color:#8be9fd}
+.output-area{background:#12101f;padding:10px 14px;font-family:monospace;font-size:12px;color:#50fa7b;border-top:1px solid #3a3560;min-height:40px}
+.btn{padding:7px 16px;border-radius:var(--radius-sm);border:none;font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.btn:hover{opacity:.85}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-ghost{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
+.points-anim{animation:popIn .4s cubic-bezier(.17,.67,.4,1.3) both}
+@keyframes popIn{0%{transform:scale(0.6);opacity:0}100%{transform:scale(1);opacity:1}}
+.ring-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+.ring-label{font-size:11px;color:var(--text3);text-align:center}
+.ring-val{font-size:15px;font-weight:600;color:var(--text)}
+.tab-row{display:flex;gap:4px;margin-bottom:14px;background:var(--surface2);border-radius:var(--radius-sm);padding:3px}
+.tab{padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--text3);border:none;background:none;font-weight:500;transition:background .15s,color .15s}
+.tab.active{background:var(--surface);color:var(--accent);box-shadow:0 1px 3px rgba(108,92,231,.1)}
+.profile-header{display:flex;align-items:center;gap:16px;margin-bottom:16px;padding:16px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border)}
+.profile-av{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600;color:#fff;flex-shrink:0}
+.profile-name{font-size:17px;font-weight:600;color:var(--text)}
+.profile-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.profile-badges{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.xp-bar-wrap{margin-top:8px}
+.xp-label{font-size:11px;color:var(--text3);display:flex;justify-content:space-between}
+.submit-confirm{background:var(--green-bg);border:1px solid var(--green);border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;gap:10px;margin-top:10px}
+.submit-confirm-icon{width:32px;height:32px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.login-page{display:flex;align-items:center;justify-content:center;height:100%;background:var(--bg)}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px 28px;width:320px;box-shadow:var(--card-shadow)}
+.login-logo{display:flex;align-items:center;gap:8px;margin-bottom:20px}
+.input-group{margin-bottom:12px}
+.input-label{font-size:12px;color:var(--text2);margin-bottom:4px;display:block}
+.input-field{width:100%;padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;outline:none;transition:border-color .15s}
+.input-field:focus{border-color:var(--accent)}
+.forgot{font-size:11px;color:var(--accent);cursor:pointer;float:right;margin-top:-10px;margin-bottom:8px}
+.social-divider{display:flex;align-items:center;gap:8px;margin:12px 0;color:var(--text3);font-size:11px}
+.social-divider::before,.social-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.social-btn{width:100%;padding:7px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;cursor:pointer;transition:background .15s}
+.social-btn:hover{background:var(--surface2)}
+.collapsed .logo-text,.collapsed .avatar-info,.collapsed .nav-item span,.collapsed .nav-label,.collapsed .sidebar-footer span{display:none!important}
+.collapsed .nav-item{justify-content:center;padding:9px}
+.collapsed .avatar-section{justify-content:center}
+.collapsed .sidebar-footer{justify-content:center}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+<div class="sidebar" id="sidebar">
+  <div class="logo-row">
+    <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+    <span class="logo-text">CodeLearn</span>
+  </div>
+  <div class="avatar-section">
+    <div class="avatar">AK</div>
+    <div class="avatar-info">
+      <div class="avatar-name" id="userName"></div>
+      <div class="avatar-role">1,240 XP · Rank #3</div>
+    </div>
+  </div>
+  <nav>
+    <div class="nav-item active" onclick="show('dashboard',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span>Dashboard</span>
+    </div>
+    <div class="nav-item" onclick="show('courses',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+      <span>My Courses</span>
+    </div>
+    <div class="nav-item" onclick="show('tasks',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      <span>Tasks</span>
+    </div>
+    <div class="nav-item" onclick="show('editor',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      <span>Code Editor</span>
+    </div>
+    <div class="nav-item" onclick="show('leaderboard',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+      <span>Leaderboard</span>
+    </div>
+    <div class="nav-item" onclick="show('progress',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span>Progress</span>
+    </div>
+    <div class="nav-item" onclick="show('profile',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Profile</span>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="dark-toggle" onclick="toggleDark()" style="flex:1;justify-content:center">
+      <span id="darkLabel" style="font-size:12px">Light</span>
+      <div class="toggle-pill" id="pill"><div class="toggle-dot"></div></div>
+    </button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <span class="page-title" id="pageTitle">Dashboard</span>
+    <div class="search-box">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <span>Search courses, tasks…</span>
+    </div>
+    <div class="notif-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><div class="notif-dot"></div></div>
+    <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" id="btnSignOut" >Sign out</button>
+  </div>
+
+  <div class="content">
+
+    <div class="page active" id="page-dashboard">
+      <div class="grid4" style="margin-bottom:14px">
+        <div class="card"><div class="card-title">Enrolled</div><div class="stat-val">4</div><div class="stat-sub">Active courses</div></div>
+        <div class="card"><div class="card-title">Total XP</div><div class="stat-val">1,240</div><div class="stat-sub stat-up">+120 this week</div></div>
+        <div class="card"><div class="card-title">Tasks done</div><div class="stat-val">34/40</div><div class="stat-sub">85% completion</div></div>
+        <div class="card"><div class="card-title">Streak</div><div class="stat-val">12 days</div><div class="stat-sub">Keep it up!</div></div>
+      </div>
+      <div class="grid2">
+        <div>
+          <div class="section-head"><h3>Today's tasks</h3><button class="view-all btn" onclick="show('tasks',document.querySelectorAll('.nav-item')[2])">View all</button></div>
+          <div class="task-item" onclick="show('editor',document.querySelectorAll('.nav-item')[3])">
+            <div class="task-check"></div>
+            <div class="task-info"><div class="task-name">Binary Search Tree</div><div class="task-course">Data Structures</div></div>
+            <div class="task-due">Due 6 PM</div>
+          </div>
+          <div class="task-item" onclick="show('editor',document.querySelectorAll('.nav-item')[3])">
+            <div class="task-check"></div>
+            <div class="task-info"><div class="task-name">REST API Design</div><div class="task-course">Web Dev</div></div>
+            <div class="task-due">Due 9 PM</div>
+          </div>
+          <div class="task-item">
+            <div class="task-check done"></div>
+            <div class="task-info"><div class="task-name">CSS Flexbox Layout</div><div class="task-course">Web Dev</div></div>
+            <div class="task-due ok">Done +50 XP</div>
+          </div>
+          <div class="section-head" style="margin-top:14px"><h3>Upcoming deadlines</h3></div>
+          <div class="task-item">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--amber);flex-shrink:0;margin:0 5px"></div>
+            <div class="task-info"><div class="task-name">Sorting Algorithms Quiz</div><div class="task-course">Algorithms · Tomorrow 10 AM</div></div>
+            <span class="badge badge-amber">Tomorrow</span>
+          </div>
+          <div class="task-item">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;margin:0 5px"></div>
+            <div class="task-info"><div class="task-name">ML Model Project</div><div class="task-course">Machine Learning · Apr 17</div></div>
+            <span class="badge badge-purple">2 days</span>
+          </div>
+        </div>
+        <div>
+          <div class="section-head"><h3>Course progress</h3></div>
+          <div class="card" style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:500;color:var(--text)">Data Structures</span><span style="font-size:12px;color:var(--accent);font-weight:500">78%</span></div>
+            <div style="font-size:11px;color:var(--text3);margin:2px 0 6px">13/17 tasks</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:78%"></div></div>
+          </div>
+          <div class="card" style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:500;color:var(--text)">Web Dev</span><span style="font-size:12px;color:var(--green);font-weight:500">92%</span></div>
+            <div style="font-size:11px;color:var(--text3);margin:2px 0 6px">11/12 tasks</div>
+            <div class="progress-bar"><div class="progress-fill green" style="width:92%"></div></div>
+          </div>
+          <div class="card" style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:500;color:var(--text)">Machine Learning</span><span style="font-size:12px;color:var(--amber);font-weight:500">45%</span></div>
+            <div style="font-size:11px;color:var(--text3);margin:2px 0 6px">4/9 tasks</div>
+            <div class="progress-bar"><div class="progress-fill amber" style="width:45%"></div></div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:500;color:var(--text)">System Design</span><span style="font-size:12px;color:var(--accent);font-weight:500">60%</span></div>
+            <div style="font-size:11px;color:var(--text3);margin:2px 0 6px">6/10 tasks</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="page-courses">
+      <div class="grid3">
+        <div class="course-card" onclick="show('editor',document.querySelectorAll('.nav-item')[3])">
+          <div class="course-img" style="background:var(--accent-bg)">🌲</div>
+          <div class="course-name">Data Structures</div>
+          <div class="course-meta">17 tasks · Dr. Priya Nair</div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span class="badge badge-purple">In progress</span><span style="font-size:11px;color:var(--accent);font-weight:500">78%</span></div>
+          <div class="progress-bar" style="margin-top:8px"><div class="progress-fill" style="width:78%"></div></div>
+        </div>
+        <div class="course-card" onclick="show('editor',document.querySelectorAll('.nav-item')[3])">
+          <div class="course-img" style="background:var(--green-bg)">🌐</div>
+          <div class="course-name">Web Development</div>
+          <div class="course-meta">12 tasks · Prof. Rahul Sharma</div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span class="badge badge-green">Nearly done</span><span style="font-size:11px;color:var(--green);font-weight:500">92%</span></div>
+          <div class="progress-bar" style="margin-top:8px"><div class="progress-fill green" style="width:92%"></div></div>
+        </div>
+        <div class="course-card" onclick="show('editor',document.querySelectorAll('.nav-item')[3])">
+          <div class="course-img" style="background:var(--amber-bg)">🤖</div>
+          <div class="course-name">Machine Learning</div>
+          <div class="course-meta">9 tasks · Dr. Anika Patel</div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span class="badge badge-amber">In progress</span><span style="font-size:11px;color:var(--amber);font-weight:500">45%</span></div>
+          <div class="progress-bar" style="margin-top:8px"><div class="progress-fill amber" style="width:45%"></div></div>
+        </div>
+        <div class="course-card">
+          <div class="course-img" style="background:var(--accent-bg)">🏗️</div>
+          <div class="course-name">System Design</div>
+          <div class="course-meta">10 tasks · Prof. Kiran Rao</div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><span class="badge badge-purple">In progress</span><span style="font-size:11px;color:var(--accent);font-weight:500">60%</span></div>
+          <div class="progress-bar" style="margin-top:8px"><div class="progress-fill" style="width:60%"></div></div>
+        </div>
+        <div class="course-card" style="border:1.5px dashed var(--border);background:var(--surface2);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:160px">
+          <div style="font-size:24px;margin-bottom:8px;color:var(--text3)">+</div>
+          <div style="font-size:13px;color:var(--text3)">Browse more courses</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="page-tasks">
+      <div class="tab-row">
+        <button class="tab active" onclick="switchTab(this,'ttToday')">Today's tasks</button>
+        <button class="tab" onclick="switchTab(this,'ttPrev')">Previous tasks</button>
+      </div>
+      <div id="ttToday">
+        <div class="task-item" onclick="show('editor',document.querySelectorAll('.nav-item')[3])">
+          <div class="task-check"></div>
+          <div class="task-info"><div class="task-name">Binary Search Tree — insert &amp; delete</div><div class="task-course">Data Structures · 15 pts</div></div>
+          <div class="task-due">Due 6 PM</div>
+        </div>
+        <div class="task-item" onclick="show('editor',document.querySelectorAll('.nav-item')[3])">
+          <div class="task-check"></div>
+          <div class="task-info"><div class="task-name">REST API Design with Express</div><div class="task-course">Web Dev · 20 pts</div></div>
+          <div class="task-due">Due 9 PM</div>
+        </div>
+        <div class="task-item" onclick="show('editor',document.querySelectorAll('.nav-item')[3])">
+          <div class="task-check"></div>
+          <div class="task-info"><div class="task-name">K-Nearest Neighbours classifier</div><div class="task-course">Machine Learning · 25 pts</div></div>
+          <div class="task-due late">Due 11 PM</div>
+        </div>
+        <div class="task-item">
+          <div class="task-check done"></div>
+          <div class="task-info"><div class="task-name">CSS Flexbox Layout</div><div class="task-course">Web Dev · 10 pts</div></div>
+          <div class="task-due ok">Submitted +10 XP</div>
+        </div>
+      </div>
+      <div id="ttPrev" style="display:none">
+        <div class="task-item">
+          <div class="task-check done"></div>
+          <div class="task-info"><div class="task-name">Linked List operations</div><div class="task-course">Data Structures · Apr 14</div></div>
+          <span class="badge badge-green">Score 95/100</span>
+        </div>
+        <div class="task-item">
+          <div class="task-check done"></div>
+          <div class="task-info"><div class="task-name">React Hooks fundamentals</div><div class="task-course">Web Dev · Apr 13</div></div>
+          <span class="badge badge-green">Score 88/100</span>
+        </div>
+        <div class="task-item">
+          <div class="task-check done"></div>
+          <div class="task-info"><div class="task-name">Linear Regression model</div><div class="task-course">Machine Learning · Apr 12</div></div>
+          <span class="badge badge-amber">Score 72/100</span>
+        </div>
+        <div class="task-item">
+          <div class="task-check done"></div>
+          <div class="task-info"><div class="task-name">Stack &amp; Queue problems</div><div class="task-course">Data Structures · Apr 11</div></div>
+          <span class="badge badge-green">Score 100/100</span>
+        </div>
+        <div class="task-item">
+          <div class="task-check done"></div>
+          <div class="task-info"><div class="task-name">Database indexing</div><div class="task-course">System Design · Apr 10</div></div>
+          <span class="badge badge-amber">Score 78/100</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="page-editor">
+      <div style="margin-bottom:10px;padding:10px 14px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <div><div style="font-size:14px;font-weight:500;color:var(--text)">Binary Search Tree — insert &amp; delete</div><div style="font-size:11px;color:var(--text3);margin-top:2px">Data Structures · 15 pts · Due today 6 PM</div></div>
+        <span class="badge badge-purple">Python</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2);background:var(--surface2);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:10px;border-left:3px solid var(--accent)">Implement a BST class with <code style="background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">insert()</code>, <code style="background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">delete()</code>, and <code style="background:var(--accent-bg);color:var(--accent);padding:1px 5px;border-radius:3px">search()</code> methods. Write time complexity for each.</div>
+      <div class="editor-wrap">
+        <div class="editor-bar">
+          <span class="editor-filename">solution.py</span>
+          <div class="editor-btns">
+            <button class="ebtn ebtn-run" onclick="runCode()">▶ Run</button>
+            <button class="ebtn ebtn-sub" onclick="submitCode()">Submit +15 XP</button>
+          </div>
+        </div>
+        <div class="code-area"><span class="kw">class</span> <span class="fn">Node</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="type">self</span>, val):
+        <span class="type">self</span>.val = val
+        <span class="type">self</span>.left = <span class="type">self</span>.right = <span class="kw">None</span>
+
+<span class="kw">class</span> <span class="fn">BST</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="type">self</span>):
+        <span class="type">self</span>.root = <span class="kw">None</span>
+
+    <span class="kw">def</span> <span class="fn">insert</span>(<span class="type">self</span>, val):
+        <span class="cm"># O(log n) average, O(n) worst</span>
+        <span class="type">self</span>.root = <span class="type">self</span>._insert(<span class="type">self</span>.root, val)
+
+    <span class="kw">def</span> <span class="fn">_insert</span>(<span class="type">self</span>, node, val):
+        <span class="kw">if not</span> node: <span class="kw">return</span> <span class="fn">Node</span>(val)
+        <span class="kw">if</span> val &lt; node.val:
+            node.left = <span class="type">self</span>._insert(node.left, val)
+        <span class="kw">elif</span> val &gt; node.val:
+            node.right = <span class="type">self</span>._insert(node.right, val)
+        <span class="kw">return</span> node
+
+<span class="cm"># Time: O(log n) avg, Space: O(h)</span></div>
+        <div class="output-area" id="output">Output will appear here after running...</div>
+      </div>
+      <div id="submitConfirm" style="display:none" class="submit-confirm points-anim">
+        <div class="submit-confirm-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div><div style="font-size:13px;font-weight:500;color:var(--green)">Solution submitted successfully!</div><div style="font-size:11px;color:var(--text3);margin-top:2px">+15 XP earned · Badge unlocked: Tree Master</div></div>
+        <span class="badge badge-green" style="margin-left:auto">+15 XP</span>
+      </div>
+    </div>
+
+    <div class="page" id="page-leaderboard">
+      <div class="grid2" style="margin-bottom:14px">
+        <div class="card" style="text-align:center">
+          <div class="card-title">Your rank</div>
+          <div style="font-size:28px;font-weight:700;color:var(--accent)">#3</div>
+          <div style="font-size:11px;color:var(--text3)">Top 5% this month</div>
+        </div>
+        <div class="card" style="text-align:center">
+          <div class="card-title">Your badges</div>
+          <div style="font-size:22px;letter-spacing:4px;margin:4px 0">🏆 🌟 🔥 ⚡</div>
+          <div style="font-size:11px;color:var(--text3)">4 of 12 earned</div>
+        </div>
+      </div>
+      <div class="section-head"><h3>Class leaderboard</h3><span class="badge badge-purple">Week</span></div>
+      <div class="lb-row" style="border-color:var(--accent);background:var(--accent-bg)">
+        <div class="lb-rank" style="font-size:14px">🥇</div>
+        <div class="lb-av" style="background:#e67e22">RV</div>
+        <div class="lb-name">Riya Verma</div>
+        <div class="lb-pts">1,580 XP</div>
+        <div class="lb-badge-row"><span class="lb-badge">🏆</span><span class="lb-badge">⚡</span></div>
+      </div>
+      <div class="lb-row">
+        <div class="lb-rank" style="font-size:14px">🥈</div>
+        <div class="lb-av" style="background:#8e44ad">SK</div>
+        <div class="lb-name">Sai Kiran</div>
+        <div class="lb-pts">1,430 XP</div>
+        <div class="lb-badge-row"><span class="lb-badge">🌟</span></div>
+      </div>
+      <div class="lb-row" style="border-color:var(--accent)">
+        <div class="lb-rank top">3</div>
+        <div class="lb-av" style="background:var(--accent)">AK</div>
+        <div class="lb-name" style="font-weight:600">Arjun Kumar (you)</div>
+        <div class="lb-pts">1,240 XP</div>
+        <div class="lb-badge-row"><span class="lb-badge">🏆</span><span class="lb-badge">🔥</span></div>
+      </div>
+      <div class="lb-row">
+        <div class="lb-rank">4</div>
+        <div class="lb-av" style="background:#00b894">PM</div>
+        <div class="lb-name">Priya Mehta</div>
+        <div class="lb-pts">1,100 XP</div>
+        <div class="lb-badge-row"><span class="lb-badge">⚡</span></div>
+      </div>
+      <div class="lb-row">
+        <div class="lb-rank">5</div>
+        <div class="lb-av" style="background:#e74c3c">TN</div>
+        <div class="lb-name">Tanvi Nair</div>
+        <div class="lb-pts">980 XP</div>
+        <div class="lb-badge-row"></div>
+      </div>
+      <div class="lb-row">
+        <div class="lb-rank">6</div>
+        <div class="lb-av" style="background:#6b6880">AS</div>
+        <div class="lb-name">Aarav Singh</div>
+        <div class="lb-pts">840 XP</div>
+        <div class="lb-badge-row"></div>
+      </div>
+    </div>
+
+    <div class="page" id="page-progress">
+      <div class="section-head" style="margin-top:0"><h3>Overall completion</h3></div>
+      <div class="card" style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:20px">
+          <div>
+            <div style="font-size:32px;font-weight:700;color:var(--accent)">85%</div>
+            <div style="font-size:12px;color:var(--text3)">All courses</div>
+          </div>
+          <div style="flex:1">
+            <div style="height:12px;border-radius:6px;background:var(--surface2);overflow:hidden"><div style="height:100%;width:85%;background:var(--accent);border-radius:6px;transition:width .8s ease"></div></div>
+            <div style="font-size:11px;color:var(--text3);margin-top:6px">34 of 40 tasks completed · 1,240 XP earned</div>
+          </div>
+        </div>
+      </div>
+      <div class="section-head"><h3>Per course breakdown</h3></div>
+      <div class="grid2">
+        <div class="card">
+          <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:10px">Data Structures</div>
+          <div style="display:flex;gap:12px;align-items:center">
+            <svg width="60" height="60" viewBox="0 0 60 60">
+              <circle cx="30" cy="30" r="24" fill="none" stroke="var(--surface2)" stroke-width="7"/>
+              <circle cx="30" cy="30" r="24" fill="none" stroke="var(--accent)" stroke-width="7" stroke-dasharray="150.8" stroke-dashoffset="33" stroke-linecap="round" transform="rotate(-90 30 30)"/>
+              <text x="30" y="35" text-anchor="middle" font-size="12" font-weight="600" fill="var(--accent)">78%</text>
+            </svg>
+            <div>
+              <div style="font-size:12px;color:var(--text3)">13 / 17 tasks</div>
+              <div style="font-size:12px;color:var(--text3);margin-top:4px">520 XP earned</div>
+              <div style="margin-top:6px"><span class="badge badge-purple">4 tasks left</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:10px">Web Development</div>
+          <div style="display:flex;gap:12px;align-items:center">
+            <svg width="60" height="60" viewBox="0 0 60 60">
+              <circle cx="30" cy="30" r="24" fill="none" stroke="var(--surface2)" stroke-width="7"/>
+              <circle cx="30" cy="30" r="24" fill="none" stroke="var(--green)" stroke-width="7" stroke-dasharray="150.8" stroke-dashoffset="12" stroke-linecap="round" transform="rotate(-90 30 30)"/>
+              <text x="30" y="35" text-anchor="middle" font-size="12" font-weight="600" fill="var(--green)">92%</text>
+            </svg>
+            <div>
+              <div style="font-size:12px;color:var(--text3)">11 / 12 tasks</div>
+              <div style="font-size:12px;color:var(--text3);margin-top:4px">440 XP earned</div>
+              <div style="margin-top:6px"><span class="badge badge-green">Almost there!</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:10px">Machine Learning</div>
+          <div style="display:flex;gap:12px;align-items:center">
+            <svg width="60" height="60" viewBox="0 0 60 60">
+              <circle cx="30" cy="30" r="24" fill="none" stroke="var(--surface2)" stroke-width="7"/>
+              <circle cx="30" cy="30" r="24" fill="none" stroke="var(--amber)" stroke-width="7" stroke-dasharray="150.8" stroke-dashoffset="83" stroke-linecap="round" transform="rotate(-90 30 30)"/>
+              <text x="30" y="35" text-anchor="middle" font-size="12" font-weight="600" fill="var(--amber)">45%</text>
+            </svg>
+            <div>
+              <div style="font-size:12px;color:var(--text3)">4 / 9 tasks</div>
+              <div style="font-size:12px;color:var(--text3);margin-top:4px">180 XP earned</div>
+              <div style="margin-top:6px"><span class="badge badge-amber">Keep going!</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:10px">System Design</div>
+          <div style="display:flex;gap:12px;align-items:center">
+            <svg width="60" height="60" viewBox="0 0 60 60">
+              <circle cx="30" cy="30" r="24" fill="none" stroke="var(--surface2)" stroke-width="7"/>
+              <circle cx="30" cy="30" r="24" fill="none" stroke="var(--accent)" stroke-width="7" stroke-dasharray="150.8" stroke-dashoffset="60" stroke-linecap="round" transform="rotate(-90 30 30)"/>
+              <text x="30" y="35" text-anchor="middle" font-size="12" font-weight="600" fill="var(--accent)">60%</text>
+            </svg>
+            <div>
+              <div style="font-size:12px;color:var(--text3)">6 / 10 tasks</div>
+              <div style="font-size:12px;color:var(--text3);margin-top:4px">240 XP earned</div>
+              <div style="margin-top:6px"><span class="badge badge-purple">4 tasks left</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="page-profile">
+      <div class="profile-header">
+        <div class="profile-av">AK</div>
+        <div>
+          <div class="profile-name">Arjun Kumar</div>
+          <div class="profile-sub">arjun.kumar@student.edu · Joined Sep 2024</div>
+          <div class="profile-badges">
+            <span class="badge badge-purple">Rank #3</span>
+            <span class="badge badge-green">1,240 XP</span>
+            <span class="badge badge-amber">12-day streak</span>
+          </div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">XP progress to next rank</div>
+          <div class="xp-bar-wrap">
+            <div class="xp-label"><span>Rank #3 — 1,240 XP</span><span>Rank #2 — 1,500 XP</span></div>
+            <div class="progress-bar" style="height:10px;margin-top:6px"><div class="progress-fill" style="width:83%"></div></div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px">260 XP to reach Rank #2</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Badges earned</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+            <div style="text-align:center"><div style="font-size:22px">🏆</div><div style="font-size:10px;color:var(--text3)">Top scorer</div></div>
+            <div style="text-align:center"><div style="font-size:22px">🌟</div><div style="font-size:10px;color:var(--text3)">Perfect score</div></div>
+            <div style="text-align:center"><div style="font-size:22px">🔥</div><div style="font-size:10px;color:var(--text3)">Streak 10d</div></div>
+            <div style="text-align:center"><div style="font-size:22px">⚡</div><div style="font-size:10px;color:var(--text3)">Speed solver</div></div>
+            <div style="text-align:center;opacity:.3"><div style="font-size:22px">💎</div><div style="font-size:10px;color:var(--text3)">Locked</div></div>
+            <div style="text-align:center;opacity:.3"><div style="font-size:22px">🚀</div><div style="font-size:10px;color:var(--text3)">Locked</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:10px">
+        <div class="card-title" style="margin-bottom:10px">Enrolled courses</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;color:var(--text)">Data Structures</span><span class="badge badge-purple">78%</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;color:var(--text)">Web Development</span><span class="badge badge-green">92%</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;color:var(--text)">Machine Learning</span><span class="badge badge-amber">45%</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;color:var(--text)">System Design</span><span class="badge badge-purple">60%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="page-login">
+      <div class="login-page">
+        <div class="login-card">
+          <div class="login-logo">
+            <div class="logo-icon" style="width:28px;height:28px"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+            <span style="font-size:16px;font-weight:600;color:var(--text)">CodeLearn</span>
+          </div>
+          <div style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:4px">Welcome back</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:20px">Sign in to continue learning</div>
+          <div class="input-group">
+            <label class="input-label">Email</label>
+            <input class="input-field" type="email" placeholder="arjun@student.edu" value="arjun.kumar@student.edu">
+          </div>
+          <div class="input-group">
+            <label class="input-label">Password</label>
+            <input class="input-field" type="password" placeholder="••••••••" value="••••••••">
+          </div>
+          <div class="forgot">Forgot password?</div>
+          <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="show('dashboard',document.querySelectorAll('.nav-item')[0])">Sign in</button>
+          <div class="social-divider">or continue with</div>
+          <button class="social-btn">Google</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+
+    let _userId=0;
+
+    $(document).ready(function(){
+
+         const params = new URLSearchParams(window.location.search);
+          _userId = params.get('userId');
+
+         fn_GetStudentDetails();
+
+        $('#btnSignOut').click(function () {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = "../index.html";
+        });
+
+    });
+
+
+    function fn_GetStudentDetails(){
+
+        $.ajax({
+            url: 'http://localhost:3000/api/execute-course',  
+            method: 'POST',
+            headers: {
+                        'Authorization': localStorage.getItem('token')
+                    },
+            contentType: 'application/json',
+            data: JSON.stringify({
+                "procID": 1,
+                "ActionName": "LoadUserInfo",
+                 "UserFirstName": 0,
+                 "UserLastName":"",
+                 "MobileNumber":0,
+                 "Password":"",
+                 "RecordID":_userId
+            }),
+            success: function (res) {
+                console.log('Success:', res);
+                
+                if(res.success){
+
+                    const student = res.data[0];
+
+                    const result = `${student.StudentFName} ${student.StudentLName}`;
+
+                    $('#userName').text(result);
+
+                } else {
+                    alert(res.message);
+                }
+            },
+            error: function (err) {
+                console.error('Error:', err);
+                alert('Something went wrong');
+            }
+        });
+    }
+
+const titles={dashboard:'Dashboard',courses:'My Courses',tasks:'Tasks',editor:'Code Editor',leaderboard:'Leaderboard',progress:'Progress Tracker',profile:'Profile',login:'Sign in'};
+function show(id,navEl){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(navEl)navEl.classList.add('active');
+  document.getElementById('pageTitle').textContent=titles[id]||id;
+  document.getElementById('submitConfirm').style.display='none';
+  document.getElementById('output').textContent='Output will appear here after running...';
+}
+function switchTab(btn,targetId){
+  btn.closest('.tab-row').querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('ttToday').style.display='none';
+  document.getElementById('ttPrev').style.display='none';
+  document.getElementById(targetId).style.display='block';
+}
+function runCode(){
+  const o=document.getElementById('output');
+  o.textContent='Running...';
+  setTimeout(()=>{o.innerHTML='<span style="color:#8be9fd">BST</span> initialized\n<span style="color:#50fa7b">insert(10) → root</span>\n<span style="color:#50fa7b">insert(5)  → left child</span>\n<span style="color:#50fa7b">insert(15) → right child</span>\n<span style="color:#f1fa8c">search(5) → True ✓</span>\n<span style="color:#f8f8f2">All test cases passed (3/3)</span>';},600);
+}
+function submitCode(){
+  const sc=document.getElementById('submitConfirm');
+  sc.style.display='flex';
+  sc.classList.remove('points-anim');
+  void sc.offsetWidth;
+  sc.classList.add('points-anim');
+}
+function toggleDark(){
+  const app=document.getElementById('app');
+  const isDark=app.closest('*').ownerDocument.body.classList.toggle('dark');
+  const pill=document.getElementById('pill');
+  pill.classList.toggle('on');
+  document.getElementById('darkLabel').textContent=pill.classList.contains('on')?'Dark':'Light';
+  app.closest('*').ownerDocument.documentElement.classList.toggle('dark');
+}
+</script>
+</body>
+</html>
